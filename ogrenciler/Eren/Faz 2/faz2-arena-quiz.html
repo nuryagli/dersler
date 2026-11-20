@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arena Quiz · Eren</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0b16; --panel:#161325; --panel2:#1d1930; --line:#2c2645;
+  --text:#ece9f6; --muted:#9a93b5; --accent:#a78bfa; --gold:#f5c451;
+  --ok:#34d399; --bad:#f87171;
+  --o1:#7c5cf0; --o2:#e0548f; --o3:#2aa6a0; --o4:#e08a2c;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,sans-serif;min-height:100vh;
+  background-image:radial-gradient(circle at 15% 0%,#2a1f55 0,transparent 45%),radial-gradient(circle at 100% 100%,#1b2f3a 0,transparent 40%)}
+.wrap{max-width:780px;margin:0 auto;padding:28px 16px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--o1),var(--o2));display:grid;place-items:center;font-size:20px}
+.brand b{display:block;font-size:17px;letter-spacing:.2px}
+.brand small{color:var(--muted);font-size:12.5px}
+.hud{display:flex;gap:8px;align-items:center}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;display:flex;gap:6px;align-items:center}
+.chip.gold{color:var(--gold)}
+.saved{font-size:12px;color:var(--ok);opacity:0;transition:opacity .4s}
+.saved.on{opacity:1}
+.bar{height:8px;background:var(--panel2);border-radius:999px;overflow:hidden;margin-bottom:22px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--o1),var(--o2));transition:width .4s}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:26px}
+.qnum{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;margin-bottom:10px}
+h1{font-size:30px;line-height:1.15;margin-bottom:12px}
+h2{font-size:21px;line-height:1.35;font-weight:600;margin-bottom:16px}
+p.lead{color:var(--muted);line-height:1.6;margin-bottom:18px}
+code{font-family:'JetBrains Mono',monospace;font-size:.88em;background:#0b0914;border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+pre{font-family:'JetBrains Mono',monospace;font-size:14px;line-height:1.65;background:#0b0914;border:1px solid var(--line);border-radius:14px;padding:16px 18px;overflow-x:auto;margin-bottom:20px;white-space:pre}
+.kw{color:#c792ea}.st{color:#c3e88d}.nu{color:#f78c6c}.cm{color:#6b6488;font-style:italic}.fn{color:#82aaff}.bi{color:#ffcb6b}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.opts{grid-template-columns:1fr}h1{font-size:25px}}
+.opt{border:none;border-radius:16px;padding:18px 16px;text-align:left;color:#fff;font:600 16px 'Space Grotesk',sans-serif;cursor:pointer;display:flex;gap:12px;align-items:center;min-height:68px;transition:transform .12s,filter .2s,opacity .2s;box-shadow:0 4px 0 rgba(0,0,0,.35)}
+.opt:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.08)}
+.opt:disabled{cursor:default}
+.opt .l{width:30px;height:30px;flex:none;border-radius:8px;background:rgba(0,0,0,.25);display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:14px}
+.opt code{background:rgba(0,0,0,.25);border-color:rgba(255,255,255,.15);color:#fff}
+.opt:nth-child(1){background:var(--o1)}.opt:nth-child(2){background:var(--o2)}.opt:nth-child(3){background:var(--o3)}.opt:nth-child(4){background:var(--o4)}
+.opt.dim{opacity:.3}
+.opt.right{outline:3px solid var(--ok);outline-offset:3px;opacity:1}
+.opt.wrong{outline:3px solid var(--bad);outline-offset:3px;opacity:1}
+.fb{margin-top:20px;border-radius:16px;padding:16px 18px;line-height:1.6;display:none}
+.fb.show{display:block;animation:pop .3s}
+.fb.ok{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.4)}
+.fb.no{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.35)}
+.fb b{display:block;font-size:17px;margin-bottom:4px}
+.fb .pts{float:right;font-family:'JetBrains Mono',monospace;color:var(--gold);font-weight:700}
+@keyframes pop{from{transform:scale(.97);opacity:0}to{transform:none;opacity:1}}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;flex-wrap:wrap}
+.btn{border:none;border-radius:12px;padding:13px 22px;font:700 15px 'Space Grotesk',sans-serif;cursor:pointer;background:var(--accent);color:#120d24}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn:hover{filter:brightness(1.08)}
+.hidden{display:none!important}
+.rules{display:grid;gap:10px;margin:6px 0 24px}
+.rules div{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:#d6d1ea;font-size:15px;line-height:1.5}
+.score{text-align:center;padding:10px 0 6px}
+.score .big{font-size:64px;font-weight:700;line-height:1;background:linear-gradient(90deg,var(--gold),#ff9f6b);-webkit-background-clip:text;background-clip:text;color:transparent}
+.score .sub{color:var(--muted);margin-top:8px}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:24px 0}
+@media(max-width:560px){.grid{grid-template-columns:repeat(4,1fr)}}
+.cell{border-radius:10px;padding:10px 4px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700}
+.cell.ok{background:rgba(52,211,153,.15);color:var(--ok);border:1px solid rgba(52,211,153,.35)}
+.cell.no{background:rgba(248,113,113,.12);color:var(--bad);border:1px solid rgba(248,113,113,.35)}
+.msg{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 16px;line-height:1.6;margin-bottom:6px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ok);color:#06281c;font-weight:700;padding:12px 20px;border-radius:12px;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.on{opacity:1}
+footer{margin-top:22px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12.5px;gap:10px;flex-wrap:wrap}
+footer button{background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><div class="mark">⚔️</div><div><b>Arena Quiz</b><small>Karakter sınıfı · genel tekrar</small></div></div>
+    <div class="hud">
+      <span class="saved" id="saved">✓ kaydedildi</span>
+      <span class="chip" id="streakChip">🔥 <span id="streak">0</span></span>
+      <span class="chip gold">★ <span id="points">0</span></span>
+    </div>
+  </header>
+  <div class="bar"><i id="barFill"></i></div>
+
+  <section class="card" id="intro">
+    <div class="qnum">Hazır mısın?</div>
+    <h1>Kodu kafanda çalıştır</h1>
+    <p class="lead">12 soru, hepsi senin <code>Karakter</code> sınıfınla yazıldı. Her soruda kodu satır satır düşün ve ne olacağını tahmin et. Kod çalıştırmak yok.</p>
+    <div class="rules">
+      <div>🎯 Her soruda tek cevap hakkın var; ilk seçimin kaydedilir.</div>
+      <div>★ Doğru cevap 100 puan. Arka arkaya doğrularda seri bonusu: her biri +50.</div>
+      <div>💬 Her cevaptan sonra kısa bir açıklama çıkar, okuyup devam et.</div>
+      <div>📨 Sonunda raporu kopyalayıp hocana gönder.</div>
+    </div>
+    <div class="actions"><button class="btn" id="startBtn">Başla →</button></div>
+  </section>
+
+  <section class="card hidden" id="quiz">
+    <div class="qnum" id="qnum"></div>
+    <h2 id="qtext"></h2>
+    <pre id="qcode"></pre>
+    <div class="opts" id="opts"></div>
+    <div class="fb" id="fb"></div>
+    <div class="actions"><button class="btn hidden" id="nextBtn">Sonraki soru →</button></div>
+  </section>
+
+  <section class="card hidden" id="result">
+    <div class="score">
+      <div class="qnum">Quiz tamam</div>
+      <div class="big" id="finalScore"></div>
+      <div class="sub" id="finalSub"></div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="msg" id="finalMsg"></div>
+    <div class="actions">
+      <button class="btn" id="reportBtn">📨 Öğretmene rapor</button>
+    </div>
+  </section>
+
+  <footer>
+    <span>Kodlayın · Eren'in Atölyesi</span>
+    <button id="resetBtn">İlerlemeyi sıfırla</button>
+  </footer>
+</div>
+<div class="toast" id="toast">Rapor kopyalandı. WhatsApp'tan gönder.</div>
+
+<script>
+const Q = [{"t": "Bu satırda <code>Karakter</code> nedir?", "code": "ok = Karakter(\"Ok\", 12, 60)", "o": ["Sınıf, yani karakterlerin kalıbı", "Nesne", "Metot", "Öznitelik"], "k": "eyJjIjogMCwgImUiOiAiPGNvZGU+S2FyYWt0ZXI8L2NvZGU+IGthbMSxYsSxbiBhZMSxLCB5YW5pIHPEsW7EsWYuIEJ1IGthbMSxcHRhbiDDp8Sxa2FuIHRlayBrYXJha3RlciA8Y29kZT5vazwvY29kZT46IG8gYmlyIG5lc25lLiIsICJzIjogImFyZW5hLWfDtmxnZSJ9"}, {"t": "<code>__init__</code> metodu ne zaman çalışır?", "code": null, "o": ["Biz <code>ok.__init__()</code> yazınca", "Program kapanırken", "Bir saldırı olduğunda", "<code>Karakter(...)</code> yazıldığı anda, kendiliğinden"], "k": "eyJjIjogMywgImUiOiAiTmVzbmUgeWFyYXTEsWxkxLHEn8SxIGFuIFB5dGhvbiA8Y29kZT5fX2luaXRfXzwvY29kZT4naSBrZW5kaXNpIMOnYcSfxLFyxLFyLiBLdXR1bGFyIG8gYW5kYSBkb2xhcjogZG/En3VtIGFuxLEuIiwgInMiOiAiYXJlbmEtZ8O2bGdlIn0="}, {"t": "<code>__init__</code> içindeki bu satırda soldaki <code>self.can</code> nedir?", "code": "self.can = can", "o": ["Parametreden gelen değer", "Nesnenin kendi can kutusu", "Bütün karakterlerin ortak canı", "Bir metot"], "k": "eyJjIjogMSwgImUiOiAiU29sZGFraSA8Y29kZT5zZWxmLmNhbjwvY29kZT4gbmVzbmVuaW4ga2VuZGkga3V0dXN1LiBTYcSfZGFraSA8Y29kZT5jYW48L2NvZGU+IHBhcmFudGV6bGUgZ2VsZW4gZGXEn2VyOyBzYXTEsXIgb251IGt1dHV5YSBrb3l1eW9yLiIsICJzIjogImFyZW5hLWfDtmxnZSJ9"}, {"t": "Bu kod ne yazdırır?", "code": "a = Karakter(\"Ok\", 12, 60)\nb = Karakter(\"Kalkan\", 12, 60)\na.can -= 20\nprint(a.can, b.can)", "o": ["40 40", "60 60", "20 60", "40 60"], "k": "eyJjIjogMywgImUiOiAiSGVyIG5lc25lbmluIGt1dHVsYXLEsSBheXLEsS4gU2FkZWNlIDxjb2RlPmE8L2NvZGU+J27EsW4gY2FuxLEgYXphbGTEsTsgPGNvZGU+YjwvY29kZT4gNjAndGEga2FsZMSxLiIsICJzIjogImFyZW5hLWfDtmxnZSJ9"}, {"t": "Bu kod ne yazdırır?", "code": "k = Karakter(\"Kahraman\", 20, 100)\ng = Karakter(\"Gölge\", 24, 150)\nk.saldir(g)\nk.saldir(g)\nprint(g.can, k.can)", "o": ["110 100", "150 60", "110 52", "130 100"], "k": "eyJjIjogMCwgImUiOiAixLBraSBrZXogPGNvZGU+azwvY29kZT4gc2FsZMSxcmTEsSwgaWtpIGtleiBoZWRlZmluIGNhbsSxIDIwIGF6YWxkxLE6IDE1MCDihpIgMTEwLiBTYWxkxLFyYW7EsW4gY2FuxLEgZGXEn2nFn21lei4iLCAicyI6ICJhcmVuYS1nw7ZsZ2UifQ=="}, {"t": "Bu kod ne yazdırır?", "code": "k = Karakter(\"Kahraman\", 20, 100)\ng = Karakter(\"Gölge\", 24, 150)\nprint(k.saldir(g))\nprint(g.can)", "o": ["None ve 130", "20 ve 130", "20 ve 150", "150 ve 130"], "k": "eyJjIjogMSwgImUiOiAiPGNvZGU+c2FsZGlyPC9jb2RlPiDDtm5jZSBjYW7EsSBkw7zFn8O8csO8ciwgc29udW5kYSA8Y29kZT5yZXR1cm4gaGFzYXI8L2NvZGU+IGlsZSAyMCd5aSBnZXJpIHZlcmlyLiA8Y29kZT5wcmludDwvY29kZT4gbyAyMCd5aSB5YXphci4iLCAicyI6ICJhcmVuYS1nw7ZsZ2UifQ=="}, {"t": "Bu kod ne yazdırır?", "code": "k = Karakter(\"Kahraman\", 20, 100)\nk.can = 90\nk.iyilestir(30)\nprint(k.can)", "o": ["120", "100", "90", "30"], "k": "eyJjIjogMSwgImUiOiAiQ2FuIMO2bmNlIDEyMCBvbHVyLCBzb25yYSB0YXZhbiBrb250cm9sw7wgb251IDxjb2RlPm1heF9jYW48L2NvZGU+J2UsIHlhbmkgMTAwJ2UgaW5kaXJpci4iLCAicyI6ICJhcmVuYS1nw7ZsZ2UifQ=="}, {"t": "Bu kod ne yazdırır?", "code": "k = Karakter(\"Kahraman\", 20, 100)\nprint(k.iyilestir(5))", "o": ["105", "100", "None", "Hata verir"], "k": "eyJjIjogMiwgImUiOiAiPGNvZGU+aXlpbGVzdGlyPC9jb2RlPiBoacOnYmlyIGRlxJ9lciBkw7ZuZMO8cm3DvHlvci4gRGXEn2VyIGTDtm5kw7xybWV5ZW4gYmlyIG1ldG9kdW4gc29udWN1IDxjb2RlPk5vbmU8L2NvZGU+J2TEsXIuIiwgInMiOiAiYXJlbmEtZ8O2bGdlIn0="}, {"t": "Canı 0 olan biri saldırırsa ne yazdırır?", "code": "olu = Karakter(\"Ölü\", 20, 0)\ng = Karakter(\"Gölge\", 24, 150)\nprint(olu.saldir(g), g.can)", "o": ["20 130", "0 130", "None 150", "0 150"], "k": "eyJjIjogMywgImUiOiAiS2FwxLEga29udHJvbMO8OiA8Y29kZT5oYXlhdHRhX21pKCk8L2NvZGU+IEZhbHNlIGTDtm5kw7wsIDxjb2RlPnJldHVybiAwPC9jb2RlPiBpbGUgbWV0b3QgYml0dGkuIEhhc2FyIHNhdMSxcsSxbmEgaGnDpyBnZWxpbm1lZGkuIiwgInMiOiAiYXJlbmEtZ8O2bGdlIn0="}, {"t": "Bu kod ne yazdırır?", "code": "k = Karakter(\"Kahraman\", 20, 100)\ng = Karakter(\"Gölge\", 24, 10)\nk.saldir(g)\nprint(g.can, g.hayatta_mi())", "o": ["-10 False", "0 False", "0 True", "-10 True"], "k": "eyJjIjogMSwgImUiOiAiQ2FuIOKIkjEwJ2EgaW5lciBhbWEgPGNvZGU+aWYgaGVkZWYuY2FuICZsdDsgMDwvY29kZT4gb251IDAnYSDDp2VrZXIuIENhbiAwIG9sdW5jYSA8Y29kZT5oYXlhdHRhX21pKCk8L2NvZGU+IEZhbHNlIGTDtm5lci4iLCAicyI6ICJhcmVuYS1nw7ZsZ2UifQ=="}, {"t": "Kahramanın canı tam 30. <code>hamle</code> ne döndürür?", "code": "def hamle(kahraman, boss):\n    if kahraman.can <= 30:\n        return \"iyilestir\"\n    return \"saldir\"\n\n# k ve g önceden yaratıldı\nk.can = 30\nprint(hamle(k, g))", "o": ["saldir", "iyilestir", "None", "True"], "k": "eyJjIjogMSwgImUiOiAiPGNvZGU+Jmx0Oz08L2NvZGU+IGXFn2l0bGnEn2kgZGUga2Fwc2FyLiAzMCDiiaQgMzAgZG/En3J1LCBpbGsgPGNvZGU+cmV0dXJuPC9jb2RlPiDDp2FsxLHFn8SxciB2ZSBmb25rc2l5b24gYml0ZXIuIiwgInMiOiAiYXJlbmEtZ8O2bGdlIn0="}, {"t": "Bu kod ne yazdırır?", "code": "def karar():\n    print(\"saldir\")\n\nx = karar()\nprint(x)", "o": ["saldir (bir kez)", "saldir ve saldir", "None", "saldir ve None"], "k": "eyJjIjogMywgImUiOiAiPGNvZGU+a2FyYXIoKTwvY29kZT4gw6dhbMSxxZ/EsXJrZW4gZWtyYW5hIHlhemFyIGFtYSBoacOnYmlyIMWfZXkgZ2VyaSB2ZXJtZXouIDxjb2RlPng8L2NvZGU+J2UgPGNvZGU+Tm9uZTwvY29kZT4gZ2VsaXIuIEFyZW5hIGRhIDxjb2RlPnByaW50PC9jb2RlPiBrdWxsYW5hbiBiaXIgPGNvZGU+aGFtbGU8L2NvZGU+J2RlbiBrYXJhciBhbGFtYXouIiwgInMiOiAiYXJlbmEtZ8O2bGdlIn0="}];
+const KEY = 'kodlayin-eren-arena-quiz-v1';
+const RKEY = KEY + '-resets';
+const N = Q.length;
+let S = {started:false, i:0, answers:[], points:0, streak:0, best:0, done:false, startedAt:null, finishedAt:null};
+
+function decode(k){
+  const bin = atob(k); const bytes = new Uint8Array(bin.length);
+  for(let j=0;j<bin.length;j++) bytes[j]=bin.charCodeAt(j);
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(S));
+    const el=document.getElementById('saved'); el.classList.add('on'); clearTimeout(save.t); save.t=setTimeout(()=>el.classList.remove('on'),1400);
+  }catch(e){}
+}
+function load(){ try{ const r=localStorage.getItem(KEY); if(r){ const o=JSON.parse(r); if(o && Array.isArray(o.answers)) S=Object.assign(S,o);} }catch(e){} }
+function resets(){ try{ return parseInt(localStorage.getItem(RKEY)||'0',10)||0; }catch(e){ return 0; } }
+
+function hl(src){
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const re = /(#[^\n]*)|("[^"\n]*")|\b(def|class|return|if|not|else|print|True|False|None)\b|\b(\d+)\b|\b([a-z_]+)(?=\()/g;
+  let out='', last=0, m;
+  while((m=re.exec(src))){
+    out += esc(src.slice(last,m.index));
+    if(m[1]) out+='<span class="cm">'+esc(m[1])+'</span>';
+    else if(m[2]) out+='<span class="st">'+esc(m[2])+'</span>';
+    else if(m[3]) out+='<span class="'+(m[3]==='print'?'bi':'kw')+'">'+m[3]+'</span>';
+    else if(m[4]) out+='<span class="nu">'+m[4]+'</span>';
+    else if(m[5]) out+='<span class="fn">'+esc(m[5])+'</span>';
+    last = re.lastIndex;
+  }
+  return out + esc(src.slice(last));
+}
+
+const $ = id => document.getElementById(id);
+function hud(){
+  $('points').textContent = S.points; $('streak').textContent = S.streak;
+  $('barFill').style.width = (S.answers.filter(a=>a).length / N * 100) + '%';
+}
+function show(id){ ['intro','quiz','result'].forEach(x=>$(x).classList.toggle('hidden',x!==id)); }
+
+function renderQ(){
+  const q = Q[S.i];
+  $('qnum').textContent = 'Soru ' + (S.i+1) + ' / ' + N;
+  $('qtext').innerHTML = q.t;
+  if(q.code){ $('qcode').innerHTML = hl(q.code); $('qcode').classList.remove('hidden'); } else $('qcode').classList.add('hidden');
+  const box = $('opts'); box.innerHTML='';
+  q.o.forEach((txt,j)=>{
+    const b=document.createElement('button'); b.className='opt';
+    b.innerHTML='<span class="l">'+'ABCD'[j]+'</span><span>'+txt+'</span>';
+    b.onclick=()=>answer(j); box.appendChild(b);
+  });
+  $('fb').className='fb'; $('fb').innerHTML=''; $('nextBtn').classList.add('hidden');
+  const a = S.answers[S.i];
+  if(a) paint(a.pick, decode(q.k), a.gained, false);
+}
+function paint(pick, k, gained){
+  [...$('opts').children].forEach((b,j)=>{
+    b.disabled=true;
+    if(j===k.c) b.classList.add('right');
+    else if(j===pick) b.classList.add('wrong');
+    else b.classList.add('dim');
+  });
+  const ok = pick===k.c;
+  $('fb').className='fb show '+(ok?'ok':'no');
+  $('fb').innerHTML = (ok?'<span class="pts">+'+gained+'</span><b>Doğru! ✓</b>':'<b>Doğru cevap: '+'ABCD'[k.c]+'</b>') + k.e;
+  $('nextBtn').textContent = S.i===N-1 ? 'Sonucu gör →' : 'Sonraki soru →';
+  $('nextBtn').classList.remove('hidden');
+}
+function answer(j){
+  if(S.answers[S.i]) return;
+  const k = decode(Q[S.i].k); const ok = j===k.c; let gained=0;
+  if(ok){ S.streak++; gained = 100 + (S.streak>1?50:0); S.points+=gained; S.best=Math.max(S.best,S.streak); }
+  else S.streak=0;
+  S.answers[S.i] = {pick:j, ok, gained};
+  save(); hud(); paint(j,k,gained);
+}
+function next(){
+  if(S.i < N-1){ S.i++; save(); renderQ(); }
+  else { S.done=true; if(!S.finishedAt) S.finishedAt=new Date().toISOString(); save(); renderResult(); }
+}
+function renderResult(){
+  show('result');
+  const c = S.answers.filter(a=>a&&a.ok).length;
+  $('finalScore').textContent = c + ' / ' + N;
+  $('finalSub').textContent = S.points + ' puan · en uzun seri ' + S.best;
+  $('grid').innerHTML = S.answers.map((a,j)=>'<div class="cell '+(a&&a.ok?'ok':'no')+'">'+(j+1)+(a&&a.ok?' ✓':' ✗')+'</div>').join('');
+  let m;
+  if(c===N) m='Kusursuz tur! Sınıfın her satırını kafanda çalıştırabiliyorsun. Takım ruhu görevine hazırsın.';
+  else if(c>=9) m='Güçlü bir sonuç. Kırmızı kutulardaki soruların kodunu VS Code\'a yaz, çalıştır ve tahmininle karşılaştır.';
+  else if(c>=6) m='İyi bir temel var. Kırmızı kutulardaki kodları VS Code\'da tek tek çalıştır; her satırdan sonra hangi kutunun değiştiğini düşün.';
+  else m='Şimdi en değerli adım şu: kırmızı kutulardaki kodları VS Code\'a yaz, satır satır çalıştır ve her satırda hangi nesnenin hangi kutusunun değiştiğini not al.';
+  $('finalMsg').textContent = m;
+}
+function report(){
+  const c = S.answers.filter(a=>a&&a.ok).length;
+  const lines = ['ARENA QUIZ · Eren', 'Skor: '+c+'/'+N+' · Puan: '+S.points+' · En uzun seri: '+S.best, 'Sıfırlama sayısı: '+resets(), ''];
+  S.answers.forEach((a,j)=>{
+    const k = decode(Q[j].k);
+    lines.push((a.ok?'✔ ':'✗ ')+'Soru '+(j+1)+' · seçimi: '+'ABCD'[a.pick]+(a.ok?'':' · doğru: '+'ABCD'[k.c]));
+  });
+  if(S.startedAt && S.finishedAt){ const d=Math.round((new Date(S.finishedAt)-new Date(S.startedAt))/60000); lines.push('', 'Süre: '+d+' dk'); }
+  lines.push('Tarih: '+new Date().toLocaleString('tr-TR'));
+  const txt = lines.join('\n');
+  const done = ()=>{ $('toast').classList.add('on'); setTimeout(()=>$('toast').classList.remove('on'),2200); };
+  if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(txt).then(done,()=>fallback(txt,done)); } else fallback(txt,done);
+}
+function fallback(txt,done){
+  const t=document.createElement('textarea'); t.value=txt; document.body.appendChild(t); t.select();
+  try{ document.execCommand('copy'); done(); }catch(e){ alert(txt); } t.remove();
+}
+$('startBtn').onclick=()=>{ S.started=true; if(!S.startedAt) S.startedAt=new Date().toISOString(); save(); show('quiz'); renderQ(); };
+$('nextBtn').onclick=next;
+$('reportBtn').onclick=report;
+$('resetBtn').onclick=()=>{
+  if(!confirm('Tüm cevaplar ve puan silinecek. Emin misin?')) return;
+  try{ localStorage.removeItem(KEY); localStorage.setItem(RKEY, String(resets()+1)); }catch(e){}
+  location.reload();
+};
+load(); hud();
+if(S.done) renderResult(); else if(S.started){ show('quiz'); renderQ(); }
+</script>
+</body>
+</html>
