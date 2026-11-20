@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lansman Quiz · Poyraz</title>
+<style>
+  :root{
+    --bg:#0b1020;
+    --bg2:#121a33;
+    --card:#161f3d;
+    --card2:#1c2750;
+    --line:#2a3766;
+    --ink:#eaf0ff;
+    --ink-dim:#a7b2d6;
+    --ink-faint:#7d88ad;
+    --accent:#ffb43d;
+    --accent2:#4fd6ff;
+    --ok:#3ddc97;
+    --no:#ff6b81;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1100px 520px at 15% -8%, #1d2a55 0%, transparent 60%),
+      radial-gradient(900px 460px at 95% 0%, #2a2046 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.6;
+    min-height:100vh;
+    padding:26px 16px 60px;
+  }
+  .wrap{max-width:780px;margin:0 auto}
+
+  /* header */
+  header{
+    display:flex;align-items:center;gap:16px;
+    padding:20px 22px;
+    background:linear-gradient(135deg,var(--card2),var(--card));
+    border:1px solid var(--line);
+    border-radius:18px;
+    box-shadow:0 18px 44px rgba(0,0,0,.38);
+  }
+  .rocket{font-size:38px;line-height:1;filter:drop-shadow(0 6px 14px rgba(255,180,61,.35))}
+  header h1{margin:0;font-size:1.5rem;letter-spacing:-.02em}
+  header p{margin:2px 0 0;color:var(--ink-dim);font-size:.9rem}
+
+  /* status bar */
+  .status{
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    margin:14px 0 22px;
+  }
+  .chip{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:7px 13px;border-radius:999px;
+    background:var(--card);border:1px solid var(--line);
+    font-size:.85rem;color:var(--ink-dim);
+    font-variant-numeric:tabular-nums;
+  }
+  .chip b{color:var(--ink);font-weight:600}
+  .chip.save{color:var(--ok);border-color:#1f4a3c;background:#11271f}
+  .chip.save.idle{color:var(--ink-faint);background:var(--card);border-color:var(--line)}
+  .spacer{flex:1}
+
+  /* cards */
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:24px;
+    box-shadow:0 14px 36px rgba(0,0,0,.3);
+  }
+  .card h2{margin:0 0 10px;font-size:1.2rem;letter-spacing:-.01em}
+  .card p{margin:0 0 12px;color:var(--ink-dim)}
+  .rules{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px}
+  .rules li{
+    display:flex;gap:11px;align-items:flex-start;
+    background:var(--bg2);border:1px solid var(--line);
+    border-radius:12px;padding:11px 13px;font-size:.92rem;color:var(--ink-dim);
+  }
+  .rules li span.ic{font-size:1.05rem;line-height:1.4}
+
+  /* progress */
+  .bar{height:7px;background:var(--bg2);border-radius:999px;overflow:hidden;border:1px solid var(--line);margin:0 0 18px}
+  .bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .35s ease}
+
+  .qmeta{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .qmeta .n{font-size:.8rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint)}
+  .tag{font-size:.74rem;padding:4px 10px;border-radius:999px;background:#20305e;border:1px solid var(--line);color:var(--accent2)}
+  .qtext{font-size:1.1rem;font-weight:600;margin:0 0 14px;letter-spacing:-.01em}
+
+  pre{
+    margin:0 0 16px;padding:15px 16px;
+    background:#070b18;border:1px solid var(--line);border-radius:13px;
+    overflow-x:auto;font-family:var(--mono);font-size:.9rem;line-height:1.65;color:#dfe7ff;
+  }
+  pre .kw{color:#ff9ecb}
+  pre .fn{color:#7fd1ff}
+  pre .st{color:#ffd98a}
+  pre .nu{color:#a8f0c6}
+  pre .cm{color:#6d7aa3;font-style:italic}
+
+  .opts{display:grid;gap:10px}
+  .opt{
+    display:flex;gap:12px;align-items:flex-start;width:100%;
+    text-align:left;cursor:pointer;
+    padding:13px 15px;border-radius:13px;
+    background:var(--bg2);border:1px solid var(--line);
+    color:var(--ink);font:inherit;font-size:.96rem;
+    transition:border-color .15s,background .15s,transform .1s;
+  }
+  .opt:hover:not(:disabled){border-color:#3e52a0;background:#1a2449}
+  .opt:active:not(:disabled){transform:translateY(1px)}
+  .opt .k{
+    flex:0 0 26px;height:26px;border-radius:8px;
+    display:grid;place-items:center;
+    background:#263566;color:var(--ink-dim);
+    font-family:var(--mono);font-size:.82rem;font-weight:600;
+  }
+  .opt .txt{flex:1;font-family:var(--mono);font-size:.92rem;line-height:1.5}
+  .opt.plain .txt{font-family:var(--sans);font-size:.95rem}
+  .opt:disabled{cursor:default;opacity:.72}
+  .opt.correct{background:#11291f;border-color:var(--ok);opacity:1}
+  .opt.correct .k{background:var(--ok);color:#06231a}
+  .opt.wrong{background:#2a1320;border-color:var(--no);opacity:1}
+  .opt.wrong .k{background:var(--no);color:#2c0710}
+
+  .exp{
+    margin:16px 0 0;padding:14px 16px;border-radius:13px;
+    background:#101a36;border:1px solid var(--line);
+    border-left:3px solid var(--accent2);
+    font-size:.93rem;color:var(--ink-dim);display:none;
+  }
+  .exp.show{display:block}
+  .exp b{color:var(--ink)}
+  .exp .verdict{display:block;margin-bottom:5px;font-weight:600}
+  .exp .verdict.ok{color:var(--ok)}
+  .exp .verdict.no{color:var(--no)}
+
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
+  button.btn{
+    cursor:pointer;font:inherit;font-weight:600;
+    padding:12px 20px;border-radius:12px;border:1px solid transparent;
+    background:linear-gradient(135deg,var(--accent),#ff8f3d);color:#2a1600;
+    transition:transform .1s,filter .15s;
+  }
+  button.btn:hover{filter:brightness(1.07)}
+  button.btn:active{transform:translateY(1px)}
+  button.ghost{background:transparent;border-color:var(--line);color:var(--ink-dim);font-weight:500}
+  button.ghost:hover{border-color:#3e52a0;color:var(--ink)}
+  button.btn[hidden]{display:none}
+
+  /* finish */
+  .finish{text-align:center}
+  .finish .big{font-size:46px;margin:0 0 6px}
+  .finish h2{font-size:1.45rem}
+  .scorebox{
+    display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:18px 0 6px;
+  }
+  .scorebox div{
+    background:var(--bg2);border:1px solid var(--line);border-radius:14px;
+    padding:14px 20px;min-width:110px;
+  }
+  .scorebox b{display:block;font-size:1.5rem;color:var(--accent);font-variant-numeric:tabular-nums}
+  .scorebox span{font-size:.78rem;color:var(--ink-faint);letter-spacing:.06em;text-transform:uppercase}
+  .note{margin-top:16px;font-size:.93rem;color:var(--ink-dim)}
+
+  footer{margin-top:28px;text-align:center;color:var(--ink-faint);font-size:.82rem}
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translate(-50%,24px);
+    background:#0f1a36;border:1px solid var(--line);color:var(--ink);
+    padding:12px 18px;border-radius:12px;font-size:.9rem;
+    box-shadow:0 14px 36px rgba(0,0,0,.45);
+    opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  @media (max-width:520px){
+    body{padding:18px 12px 48px}
+    header{padding:16px}
+    .card{padding:18px}
+    header h1{font-size:1.28rem}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="rocket">🚀</div>
+    <div>
+      <h1>Lansman Quiz</h1>
+      <p>Yayın öncesi son kontrol · Python &amp; Pygame Zero</p>
+    </div>
+  </header>
+
+  <div class="status">
+    <span class="chip save idle" id="saveChip">✓ kaydedildi</span>
+    <span class="chip">🔥 <b id="streakVal">0</b></span>
+    <span class="chip">★ <b id="scoreVal">0</b></span>
+    <span class="spacer"></span>
+    <span class="chip" id="progChip">Hazır mısın?</span>
+  </div>
+
+  <div class="bar"><i id="barFill"></i></div>
+
+  <!-- INTRO -->
+  <section class="card" id="intro">
+    <h2>Kodu kafanda çalıştır</h2>
+    <p>Bugün oyunu yayına alıyoruz. Ama bir oyunu yayınlayan kişi, o oyunun içinde ne olduğunu da bilir. Bu quizde 12 soru var: hepsi senin çalıştığın Python temelleri ve Pygame Zero üzerine.</p>
+    <p>Her soruda kodu satır satır takip et ve çıktıyı tahmin et. Kodu çalıştırmak yok — bu kısım kafanda.</p>
+    <ul class="rules">
+      <li><span class="ic">🎯</span><div>Her soruda tek cevap. İlk seçtiğin kaydedilir.</div></li>
+      <li><span class="ic">★</span><div>Doğru cevap <b>100 puan</b>. Üst üste doğru gittikçe her doğruya <b>+50 seri bonusu</b>.</div></li>
+      <li><span class="ic">💬</span><div>Her cevaptan sonra kısa bir açıklama gelir.</div></li>
+      <li><span class="ic">📨</span><div>Bitince raporu kopyala, öğretmenine gönder.</div></li>
+    </ul>
+    <div class="row">
+      <button class="btn" id="startBtn">Başla →</button>
+      <button class="btn ghost" id="resetBtn1">İlerlemeyi sıfırla</button>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="card" id="quiz" hidden>
+    <div class="qmeta">
+      <span class="n" id="qNum">Soru 1 / 12</span>
+      <span class="tag" id="qTag">python</span>
+    </div>
+    <p class="qtext" id="qText"></p>
+    <div id="qCode"></div>
+    <div class="opts" id="qOpts"></div>
+    <div class="exp" id="qExp"></div>
+    <div class="row">
+      <button class="btn" id="nextBtn" hidden>Sonraki soru →</button>
+      <button class="btn ghost" id="resetBtn2">İlerlemeyi sıfırla</button>
+    </div>
+  </section>
+
+  <!-- FINISH -->
+  <section class="card finish" id="finish" hidden>
+    <p class="big">🎉</p>
+    <h2 id="finishTitle">Quiz tamam</h2>
+    <p id="finishLine" class="note"></p>
+    <div class="scorebox">
+      <div><b id="fScore">0</b><span>puan</span></div>
+      <div><b id="fRight">0</b><span>doğru</span></div>
+      <div><b id="fBest">0</b><span>en uzun seri</span></div>
+    </div>
+    <p class="note">Şimdi sırada eğlenceli kısım: oyunu yayına alıyoruz. 🚀</p>
+    <div class="row" style="justify-content:center">
+      <button class="btn" id="reportBtn">📨 Öğretmene rapor</button>
+      <button class="btn ghost" id="resetBtn3">İlerlemeyi sıfırla</button>
+    </div>
+  </section>
+
+  <footer>Kodlayın · Poyraz'ın Atölyesi</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var KEY = "kodlayin-poyraz-lansman-quiz-v1";
+
+  var Q = [
+    {
+      tag:"python",
+      q:"Bu kod ekrana ne yazar?",
+      code:'<span class="nu">puan</span> = <span class="nu">0</span>\npuan = puan + <span class="nu">5</span>\npuan += <span class="nu">5</span>\n<span class="fn">print</span>(puan)',
+      opts:["5","10","15","0"],
+      a:1,
+      exp:"<b>puan += 5</b> ile <b>puan = puan + 5</b> aynı şey. İki kez 5 eklendi: 0 → 5 → 10."
+    },
+    {
+      tag:"python",
+      q:"Bu kod çalıştırılınca ne olur?",
+      code:'tiklama = <span class="nu">3</span>\n<span class="fn">print</span>(<span class="st">"Tıklama: "</span> + tiklama)',
+      opts:["Tıklama: 3","Tıklama: ","Hata verir","3"],
+      a:2,
+      plain:true,
+      exp:"Metin ile sayı doğrudan toplanamaz, TypeError çıkar. Ya <b>str(tiklama)</b> kullanılır ya da f-string: <b>f\"Tıklama: {tiklama}\"</b>."
+    },
+    {
+      tag:"python",
+      q:"Ekrana ne yazar?",
+      code:'renkler = [<span class="st">"kırmızı"</span>, <span class="st">"yeşil"</span>, <span class="st">"mavi"</span>]\n<span class="fn">print</span>(renkler[<span class="nu">1</span>])',
+      opts:['"kırmızı"','"yeşil"','"mavi"','Hata verir'],
+      a:1,
+      exp:"Liste indeksleri 0'dan başlar: 0 → kırmızı, 1 → yeşil, 2 → mavi."
+    },
+    {
+      tag:"python",
+      q:"Döngü bittiğinde ekrana ne yazar?",
+      code:'toplam = <span class="nu">0</span>\n<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">1</span>, <span class="nu">4</span>):\n    toplam += i\n<span class="fn">print</span>(toplam)',
+      opts:["3","4","6","10"],
+      a:2,
+      exp:"range(1, 4) → 1, 2, 3 (4 dahil değil). Toplam: 1 + 2 + 3 = 6."
+    },
+    {
+      tag:"python",
+      q:"Ekrana ne yazar?",
+      code:'puan = <span class="nu">10</span>\n<span class="kw">if</span> puan &gt; <span class="nu">20</span>:\n    <span class="fn">print</span>(<span class="st">"Usta"</span>)\n<span class="kw">elif</span> puan &gt; <span class="nu">5</span>:\n    <span class="fn">print</span>(<span class="st">"Çırak"</span>)\n<span class="kw">else</span>:\n    <span class="fn">print</span>(<span class="st">"Yeni"</span>)',
+      opts:['Usta','Çırak','Yeni','Hem Çırak hem Yeni'],
+      a:1,
+      exp:"10 &gt; 20 yanlış, sonraki koşula geçer: 10 &gt; 5 doğru → Çırak. if/elif zincirinde sadece ilk doğru blok çalışır."
+    },
+    {
+      tag:"python",
+      q:"Ekrana ne yazar?",
+      code:'<span class="kw">def</span> <span class="fn">iki_kat</span>(sayi):\n    sayi * <span class="nu">2</span>\n\nsonuc = <span class="fn">iki_kat</span>(<span class="nu">4</span>)\n<span class="fn">print</span>(sonuc)',
+      opts:["8","4","None","Hata verir"],
+      a:2,
+      exp:"Fonksiyon hesabı yapıyor ama sonucu geri vermiyor. <b>return</b> yazılmayan fonksiyon <b>None</b> döndürür."
+    },
+    {
+      tag:"python",
+      q:"Bu kodda <b>puan</b> neden artmıyor?",
+      code:'puan = <span class="nu">0</span>\n\n<span class="kw">def</span> <span class="fn">tikla</span>():\n    puan = puan + <span class="nu">1</span>',
+      opts:[
+        "Fonksiyonun içinde puan yerel bir değişken sayılır, dışarıdakine dokunmaz — global puan gerekir",
+        "puan = 0 satırı fonksiyonun içine yazılmalı",
+        "Artırmak için mutlaka += kullanmak gerekir",
+        "Fonksiyon hiç çağrılmadığı için kod yanlıştır"
+      ],
+      a:0,
+      plain:true,
+      exp:"Fonksiyon içinde bir değişkene atama yapınca Python onu yerel kabul eder. Dışarıdaki sayacı değiştirmek için fonksiyonun başına <b>global puan</b> yazılır — clicker oyunlarının klasik tuzağı."
+    },
+    {
+      tag:"pygame zero",
+      q:"Pygame Zero'da <b>draw()</b> fonksiyonu ne zaman çalışır?",
+      code:null,
+      opts:[
+        "Sadece program açılırken bir kez",
+        "Her karede, otomatik olarak",
+        "Sadece fareye tıklandığında",
+        "Biz kodun içinde draw() yazıp çağırdığımızda"
+      ],
+      a:1,
+      plain:true,
+      exp:"Pygame Zero <b>draw()</b>'u saniyede onlarca kez kendisi çağırır. Biz elle çağırmayız; sadece o karede ekranda ne olacağını yazarız."
+    },
+    {
+      tag:"pygame zero",
+      q:"<b>update()</b> ile <b>draw()</b> arasındaki fark nedir?",
+      code:null,
+      opts:[
+        "update() ekrana çizer, draw() hesap yapar",
+        "update() hesap ve mantık içindir (konum, puan, çarpışma), draw() ekrana çizim içindir",
+        "İkisi tamamen aynıdır, isim tercihi",
+        "update() sadece klavye, draw() sadece fare içindir"
+      ],
+      a:1,
+      plain:true,
+      exp:"İş bölümü: <b>update()</b> oyunun durumunu değiştirir, <b>draw()</b> o durumu ekranda gösterir. Bu ayrım oyunu düzenli tutar."
+    },
+    {
+      tag:"pygame zero",
+      q:"<b>draw()</b> içinde <b>screen.clear()</b> yazmayı atlarsan ne olur?",
+      code:'<span class="kw">def</span> <span class="fn">draw</span>():\n    <span class="cm"># screen.clear() yok</span>\n    kutu.<span class="fn">draw</span>()',
+      opts:[
+        "Hiçbir şey çizilmez, ekran siyah kalır",
+        "Program hata verip kapanır",
+        "Önceki karelerin çizimleri ekranda kalır, hareket iz bırakır",
+        "Oyun çok hızlanır"
+      ],
+      a:2,
+      plain:true,
+      exp:"Her kare bir öncekinin üstüne çizilir. Ekranı temizlemeyince hareket eden nesne arkasında iz bırakır — bazen efekt olarak bile kullanılır."
+    },
+    {
+      tag:"pygame zero",
+      q:"Ekrana ne yazar?",
+      code:'kutu = <span class="fn">Actor</span>(<span class="st">"kutu"</span>)\nkutu.pos = (<span class="nu">100</span>, <span class="nu">50</span>)\nkutu.x += <span class="nu">20</span>\n<span class="fn">print</span>(kutu.pos)',
+      opts:["(100, 50)","(120, 50)","(100, 70)","(120, 70)"],
+      a:1,
+      exp:"<b>pos</b> hem x hem y'yi tutar. Sadece <b>x</b>'i 20 artırdık: x 120 oldu, y 50'de kaldı."
+    },
+    {
+      tag:"pygame zero",
+      q:"Oyuncu hedefin <b>dışına</b> tıklarsa ne olur?",
+      code:'<span class="kw">def</span> <span class="fn">on_mouse_down</span>(pos):\n    <span class="kw">if</span> hedef.<span class="fn">collidepoint</span>(pos):\n        puan_artir()',
+      opts:[
+        "Puan yine artar, çünkü tıklama algılandı",
+        "Hiçbir şey olmaz, puan artmaz",
+        "Program hata verir",
+        "Hedef tıklanan yere ışınlanır"
+      ],
+      a:1,
+      plain:true,
+      exp:"<b>collidepoint(pos)</b> tıklamanın hedefin üstünde olup olmadığını sorar. Üstünde değilse if bloğu hiç çalışmaz — oyun da boş tıklamaya puan vermez."
+    }
+  ];
+
+  var state = { i:0, score:0, streak:0, best:0, right:0, answers:[], started:false, done:false };
+
+  var el = function(id){ return document.getElementById(id); };
+  var saveChip = el("saveChip"), toastEl = el("toast");
+  var saveTimer = null, toastTimer = null;
+
+  function save(){
+    try{
+      localStorage.setItem(KEY, JSON.stringify(state));
+      saveChip.classList.remove("idle");
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(function(){ saveChip.classList.add("idle"); }, 1400);
+    }catch(e){ /* storage yoksa sessizce devam */ }
+  }
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(!raw) return;
+      var s = JSON.parse(raw);
+      if(s && typeof s.i === "number"){
+        state.i = s.i; state.score = s.score||0; state.streak = s.streak||0;
+        state.best = s.best||0; state.right = s.right||0;
+        state.answers = Array.isArray(s.answers) ? s.answers : [];
+        state.started = !!s.started; state.done = !!s.done;
+      }
+    }catch(e){ /* bozuk kayıt: sıfırdan başla */ }
+  }
+
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove("show"); }, 2600);
+  }
+
+  function paintStatus(){
+    el("scoreVal").textContent = state.score;
+    el("streakVal").textContent = state.streak;
+    var done = state.done ? Q.length : (state.started ? state.i + 1 : 0);
+    el("barFill").style.width = Math.round(done / Q.length * 100) + "%";
+    el("progChip").textContent = state.done ? "Bitti ✓"
+      : (state.started ? (done + " / " + Q.length) : "Hazır mısın?");
+  }
+
+  function show(which){
+    ["intro","quiz","finish"].forEach(function(id){ el(id).hidden = (id !== which); });
+  }
+
+  function renderQ(){
+    var q = Q[state.i];
+    el("qNum").textContent = "Soru " + (state.i+1) + " / " + Q.length;
+    el("qTag").textContent = q.tag;
+    el("qText").innerHTML = q.q;
+    el("qCode").innerHTML = q.code ? ("<pre>" + q.code + "</pre>") : "";
+    el("qExp").className = "exp";
+    el("qExp").innerHTML = "";
+    el("nextBtn").hidden = true;
+
+    var box = el("qOpts");
+    box.innerHTML = "";
+    q.opts.forEach(function(text, idx){
+      var b = document.createElement("button");
+      b.className = "opt" + (q.plain ? " plain" : "");
+      b.type = "button";
+      b.innerHTML = '<span class="k">' + "ABCD".charAt(idx) + '</span><span class="txt">' + text + '</span>';
+      b.addEventListener("click", function(){ answer(idx); });
+      box.appendChild(b);
+    });
+    paintStatus();
+  }
+
+  function answer(pick){
+    var q = Q[state.i];
+    var ok = (pick === q.a);
+    var buttons = el("qOpts").querySelectorAll(".opt");
+
+    for(var n=0; n<buttons.length; n++){
+      buttons[n].disabled = true;
+      if(n === q.a) buttons[n].classList.add("correct");
+      if(n === pick && !ok) buttons[n].classList.add("wrong");
+    }
+
+    var gained = 0;
+    if(ok){
+      state.streak += 1;
+      gained = 100 + (state.streak > 1 ? 50 : 0);
+      state.score += gained;
+      state.right += 1;
+      if(state.streak > state.best) state.best = state.streak;
+    } else {
+      state.streak = 0;
+    }
+    state.answers[state.i] = { pick:pick, ok:ok };
+
+    var exp = el("qExp");
+    exp.className = "exp show";
+    exp.innerHTML =
+      '<span class="verdict ' + (ok ? "ok" : "no") + '">' +
+      (ok ? ("Doğru · +" + gained + " puan" + (state.streak > 1 ? " (seri " + state.streak + ")" : "")) : "Cevap bu değil") +
+      '</span>' + q.exp;
+
+    el("nextBtn").hidden = false;
+    el("nextBtn").textContent = (state.i === Q.length-1) ? "Sonucu gör →" : "Sonraki soru →";
+    paintStatus();
+    save();
+  }
+
+  function next(){
+    if(state.i < Q.length-1){
+      state.i += 1;
+      save();
+      renderQ();
+      window.scrollTo({top:0, behavior:"smooth"});
+    } else {
+      state.done = true;
+      save();
+      renderFinish();
+    }
+  }
+
+  function renderFinish(){
+    el("fScore").textContent = state.score;
+    el("fRight").textContent = state.right + " / " + Q.length;
+    el("fBest").textContent = state.best;
+    var line;
+    if(state.right === Q.length) line = "Tam isabet. Yayınladığın oyunun her satırını okuyabiliyorsun.";
+    else if(state.right >= 9) line = "Sağlam bir tur. Kodu kafanda çalıştırma işi oturmuş.";
+    else if(state.right >= 6) line = "İyi gidiyor. Açıklamaları bir daha okuyunca kalan sorular da yerine oturur.";
+    else line = "Bu quiz zor tarafı seçti. Açıklamaları birlikte geçelim, sonra tekrar bakarsın.";
+    el("finishLine").textContent = line;
+    show("finish");
+    paintStatus();
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+
+  function report(){
+    var lines = [];
+    lines.push("LANSMAN QUIZ — Poyraz");
+    lines.push("Python & Pygame Zero · yayın öncesi kontrol");
+    lines.push("Tarih: " + new Date().toLocaleString("tr-TR"));
+    lines.push("");
+    lines.push("Puan: " + state.score);
+    lines.push("Doğru: " + state.right + " / " + Q.length);
+    lines.push("En uzun seri: " + state.best);
+    lines.push("");
+    lines.push("Soru bazında:");
+    for(var i=0; i<Q.length; i++){
+      var a = state.answers[i];
+      var mark = a ? (a.ok ? "DOĞRU" : "YANLIŞ") : "boş";
+      var picked = a ? ("ABCD".charAt(a.pick)) : "-";
+      lines.push((i+1) + ". [" + Q[i].tag + "] " + mark + " (işaretlenen: " + picked + ")");
+    }
+    var text = lines.join("\n");
+
+    function fallback(){
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly","");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try{ ok = document.execCommand("copy"); }catch(e){ ok = false; }
+      document.body.removeChild(ta);
+      toast(ok ? "Rapor kopyalandı. WhatsApp'tan gönder." : "Kopyalanamadı — ekran görüntüsü de olur.");
+    }
+
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){
+        toast("Rapor kopyalandı. WhatsApp'tan gönder.");
+      }).catch(fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  function reset(){
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    state = { i:0, score:0, streak:0, best:0, right:0, answers:[], started:false, done:false };
+    show("intro");
+    paintStatus();
+    toast("İlerleme sıfırlandı.");
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+
+  el("startBtn").addEventListener("click", function(){
+    state.started = true;
+    save();
+    show("quiz");
+    renderQ();
+  });
+  el("nextBtn").addEventListener("click", next);
+  el("reportBtn").addEventListener("click", report);
+  el("resetBtn1").addEventListener("click", reset);
+  el("resetBtn2").addEventListener("click", reset);
+  el("resetBtn3").addEventListener("click", reset);
+
+  load();
+  paintStatus();
+  if(state.done){ renderFinish(); }
+  else if(state.started){ show("quiz"); renderQ(); }
+  else { show("intro"); }
+})();
+</script>
+</body>
+</html>
