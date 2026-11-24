@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Platform Quiz · Güneş</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --page:#cfeeff; --page2:#e9f7ff; --panel:#ffffff; --ink:#1f2a4d; --muted:#55628a; --line:#1f2a4d;
+  --grass:#5cc84a; --grass2:#3f9a37; --dirt:#a06a3a; --dirt2:#c08850; --gold:#ffd23f; --gold2:#7a4a00;
+  --ok:#1f8a4c; --okbg:#e2f6e9; --no:#c2410c; --nobg:#fff0e6;
+  --o1:#6d5ce8; --o2:#e0457b; --o3:#16958f; --o4:#e07a12;
+  --codebg:#f3f6fb;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --page:#0f1636; --page2:#18214a; --panel:#1b2550; --ink:#eef3ff; --muted:#aeb9de; --line:#0a0f26;
+    --ok:#5fe39a; --okbg:#173d2c; --no:#ffb083; --nobg:#40261a; --codebg:#141c40;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0f1636; --page2:#18214a; --panel:#1b2550; --ink:#eef3ff; --muted:#aeb9de; --line:#0a0f26;
+  --ok:#5fe39a; --okbg:#173d2c; --no:#ffb083; --nobg:#40261a; --codebg:#141c40;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--page)}
+body{color:var(--ink);font-family:'Nunito',system-ui,sans-serif;min-height:100vh;line-height:1.55;
+  background:linear-gradient(var(--page) 0,var(--page2) 70%);padding-bottom:env(safe-area-inset-bottom)}
+.ground{height:28px;background:repeating-linear-gradient(90deg,var(--dirt) 0 16px,var(--dirt2) 16px 32px);border-top:8px solid var(--grass);box-shadow:inset 0 4px 0 var(--grass2)}
+.wrap{max-width:780px;margin:0 auto;padding:22px 16px 40px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.brand svg{width:40px;height:40px;image-rendering:pixelated}
+.brand b{display:block;font:700 20px 'Pixelify Sans',sans-serif;letter-spacing:.3px}
+.brand small{color:var(--muted);font-size:13px}
+.hud{display:flex;gap:8px;align-items:center}
+.chip{background:var(--panel);border:3px solid var(--line);padding:4px 10px;font:700 15px 'Pixelify Sans',sans-serif;display:flex;gap:6px;align-items:center;box-shadow:3px 3px 0 var(--line)}
+.saved{font-size:13px;font-weight:800;color:var(--ok);opacity:0;transition:opacity .4s}
+.saved.on{opacity:1}
+
+/* seviye haritası: 12 kare */
+.map{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin:4px 0 18px;padding-top:30px;position:relative}
+.tile{height:22px;background:var(--dirt);border-top:6px solid var(--grass);position:relative}
+.tile .n{position:absolute;left:50%;top:-24px;transform:translateX(-50%);width:16px;height:20px}
+.tile.cur{outline:3px solid var(--gold);outline-offset:1px}
+.tile .hero{position:absolute;left:50%;top:-30px;transform:translateX(-50%);width:24px;height:24px}
+
+.card{background:var(--panel);border:3px solid var(--line);box-shadow:6px 6px 0 var(--line);padding:24px}
+.qnum{font:700 14px 'Pixelify Sans',sans-serif;letter-spacing:1px;color:var(--o1);margin-bottom:8px}
+:root[data-theme="dark"] .qnum{color:#a99dff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .qnum{color:#a99dff}}
+h1{font:700 32px/1.15 'Pixelify Sans',sans-serif;margin-bottom:10px}
+h2{font-size:21px;line-height:1.4;font-weight:800;margin-bottom:16px}
+p.lead{color:var(--muted);margin-bottom:16px;font-size:17px}
+code{font-family:'Nunito',sans-serif;font-weight:800;font-size:.95em;background:#ff8c1a;color:#fff;border-radius:999px;padding:1px 9px}
+.rules{display:grid;gap:8px;margin:6px 0 22px}
+.rules div{background:var(--codebg);border:2px solid var(--line);padding:10px 14px;font-size:16px}
+
+/* Scratch blokları */
+.code{background:var(--codebg);border:2px dashed var(--muted);padding:16px;margin-bottom:18px;overflow-x:auto}
+.script{display:inline-flex;flex-direction:column;align-items:flex-start;min-width:max-content}
+.blk{--c:#4c97ff;background:var(--c);color:#fff;font:800 14px/1.25 'Nunito',sans-serif;padding:8px 11px;border-radius:6px;
+  border:1px solid rgba(0,0,0,.18);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;position:relative;margin-bottom:-1px}
+.blk.hat{border-radius:22px 22px 6px 6px;padding-top:14px;margin-top:4px}
+.blk.def{border-radius:22px 22px 6px 6px;padding:14px 11px 9px}
+.blk.def .proto{background:#ff8fa3;border:1px solid rgba(0,0,0,.15);border-radius:6px;padding:6px 9px;display:inline-flex;gap:6px;align-items:center}
+.cblk{display:inline-flex;flex-direction:column;align-items:flex-start;margin-bottom:-1px}
+.cblk>.blk{border-radius:6px 6px 0 6px;margin-bottom:0}
+.cmid{display:flex;align-items:stretch}
+.cmid>.arm{width:18px;background:var(--c);border-left:1px solid rgba(0,0,0,.18)}
+.cmid>.cin{display:flex;flex-direction:column;align-items:flex-start;padding:1px 0;min-height:22px}
+.cbot{height:16px;width:72px;background:var(--c);border-radius:0 0 6px 6px;border:1px solid rgba(0,0,0,.18);border-top:0}
+.in{background:#fff;color:#575e75;border-radius:999px;padding:1px 9px;font-weight:800}
+.dd{background:rgba(0,0,0,.16);border-radius:999px;padding:1px 9px}
+.dd:after{content:" ▾";font-size:11px}
+.rep{background:var(--rc);border:1px solid rgba(0,0,0,.18);border-radius:999px;padding:2px 9px;display:inline-flex;gap:5px;align-items:center}
+.bool{background:var(--rc);padding:3px 16px;display:inline-flex;gap:5px;align-items:center;
+  clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%)}
+.flag{display:inline-block;width:16px;height:16px;vertical-align:-3px}
+.c-motion{--c:#4c97ff}.c-looks{--c:#9966ff}.c-sound{--c:#cf63cf}.c-events{--c:#ffbf00}.c-control{--c:#ffab19}
+.c-sensing{--c:#5cb1d6}.c-operators{--c:#59c059}.c-variables{--c:#ff8c1a}.c-myblocks{--c:#ff6680}
+.c-events,.c-control{text-shadow:0 1px 0 rgba(0,0,0,.25)}
+
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.opts{grid-template-columns:1fr}h1{font-size:26px}.card{padding:18px}}
+.opt{border:3px solid var(--line);padding:14px 14px;text-align:left;color:#fff;font:800 16px 'Nunito',sans-serif;cursor:pointer;
+  display:flex;gap:12px;align-items:center;min-height:64px;box-shadow:4px 4px 0 var(--line);transition:transform .1s,opacity .2s}
+.opt:hover:not(:disabled){transform:translate(-1px,-2px)}
+.opt:active:not(:disabled){transform:translate(3px,3px);box-shadow:1px 1px 0 var(--line)}
+.opt:disabled{cursor:default}
+.opt .l{width:30px;height:30px;flex:none;background:rgba(0,0,0,.25);display:grid;place-items:center;font:700 16px 'Pixelify Sans',sans-serif}
+.opt:nth-child(1){background:var(--o1)}.opt:nth-child(2){background:var(--o2)}.opt:nth-child(3){background:var(--o3)}.opt:nth-child(4){background:var(--o4)}
+.opt.dim{opacity:.3}
+.opt.right{outline:4px solid var(--ok);outline-offset:3px;opacity:1}
+.opt.wrong{outline:4px solid var(--no);outline-offset:3px;opacity:1}
+.fb{margin-top:18px;padding:14px 16px;display:none;border:3px solid var(--line);font-size:16px}
+.fb.show{display:block;animation:pop .25s}
+.fb.ok{background:var(--okbg)}.fb.no{background:var(--nobg)}
+.fb b{display:block;font:700 18px 'Pixelify Sans',sans-serif;margin-bottom:4px}
+.fb.ok b{color:var(--ok)}.fb.no b{color:var(--no)}
+.fb .pts{float:right;font:700 18px 'Pixelify Sans',sans-serif;color:var(--gold2)}
+:root[data-theme="dark"] .fb .pts{color:var(--gold)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .fb .pts{color:var(--gold)}}
+@keyframes pop{from{transform:scale(.97);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion: reduce){.fb.show{animation:none}.opt{transition:none}}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;flex-wrap:wrap}
+.btn{border:3px solid var(--line);padding:12px 20px;font:700 17px 'Pixelify Sans',sans-serif;cursor:pointer;background:var(--gold);color:#1f2a4d;box-shadow:4px 4px 0 var(--line)}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--line)}
+a.btn{text-decoration:none;display:inline-block}
+.btn.ghost{background:var(--panel);color:var(--ink)}
+:focus-visible{outline:3px solid var(--o2);outline-offset:3px}
+.hidden{display:none!important}
+.score{text-align:center;padding:6px 0}
+.score .big{font:700 68px/1 'Pixelify Sans',sans-serif;color:var(--o1)}
+:root[data-theme="dark"] .score .big{color:var(--gold)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .score .big{color:var(--gold)}}
+.score .sub{color:var(--muted);margin-top:8px;font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:20px 0}
+@media(max-width:560px){.grid{grid-template-columns:repeat(4,1fr)}}
+.cell{padding:8px 4px;text-align:center;font:700 15px 'Pixelify Sans',sans-serif;border:3px solid var(--line)}
+.cell.ok{background:var(--okbg);color:var(--ok)}.cell.no{background:var(--nobg);color:var(--no)}
+.msg{background:var(--codebg);border:2px solid var(--line);padding:14px 16px;margin-bottom:6px;font-size:16px}
+.copybox{width:100%;min-height:160px;margin-top:12px;font:600 14px/1.5 'Nunito',sans-serif;padding:10px;border:2px solid var(--line);background:var(--codebg);color:var(--ink)}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ok);color:#fff;font-weight:800;padding:12px 20px;border:3px solid var(--line);opacity:0;transition:opacity .3s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.on{opacity:1}
+footer{margin-top:22px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;gap:10px;flex-wrap:wrap}
+footer button{background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 10 13" aria-hidden="true"><g id="noteG"></g></svg>
+      <div><b>Platform Quiz</b><small>Oyunumun motoru · genel tekrar</small></div>
+    </div>
+    <div class="hud">
+      <span class="saved" id="saved">kaydedildi</span>
+      <span class="chip" title="Arka arkaya doğru">seri <span id="streak">0</span></span>
+      <span class="chip" title="Puan">★ <span id="points">0</span></span>
+    </div>
+  </header>
+  <div class="map" id="map" aria-hidden="true"></div>
+
+  <section class="card" id="intro">
+    <div class="qnum">HAZIR MISIN?</div>
+    <h1>Oyununu kafanda oynat</h1>
+    <p class="lead">12 soru, hepsi senin platform oyununun bloklarından. Her soruda blokları satır satır düşün ve ne olacağını tahmin et. Scratch'i açmak yok.</p>
+    <div class="rules">
+      <div>Her soruda tek cevap hakkın var; ilk seçimin kaydedilir.</div>
+      <div>Doğru cevap 100 puan. Arka arkaya doğrularda seri bonusu: her biri +50.</div>
+      <div>Her cevaptan sonra kısa bir açıklama çıkar, okuyup devam et.</div>
+      <div>Sonunda raporu kopyalayıp öğretmenine gönder.</div>
+    </div>
+    <div class="actions"><button class="btn" id="startBtn">Başla →</button></div>
+  </section>
+
+  <section class="card hidden" id="quiz">
+    <div class="qnum" id="qnum"></div>
+    <h2 id="qtext"></h2>
+    <div class="code" id="qcode"></div>
+    <div class="opts" id="opts"></div>
+    <div class="fb" id="fb" role="status" aria-live="polite"></div>
+    <div class="actions"><button class="btn hidden" id="nextBtn">Sonraki soru →</button></div>
+  </section>
+
+  <section class="card hidden" id="result">
+    <div class="score">
+      <div class="qnum">QUIZ TAMAM</div>
+      <div class="big" id="finalScore"></div>
+      <div class="sub" id="finalSub"></div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="msg" id="finalMsg"></div>
+    <div class="actions">
+      <a class="btn ghost" href="index.html">Görev Üssü</a>
+      <button class="btn" id="reportBtn">Öğretmene rapor</button>
+    </div>
+    <textarea class="copybox hidden" id="copybox" readonly aria-label="Rapor metni"></textarea>
+  </section>
+
+  <footer>
+    <span>Görev Üssü · Güneş</span>
+    <button id="resetBtn">İlerlemeyi sıfırla</button>
+  </footer>
+</div>
+<div class="ground" aria-hidden="true"></div>
+<div class="toast" id="toast">Rapor kopyalandı. WhatsApp'tan gönder.</div>
+
+<script>
+const Q = [{"t": "Karakter duruyor, <code>x hızı</code> 0. Sağ ok basılıyken <b>yürü (1)</b> bir kez çalışıyor. Sonunda <code>x hızı</code> kaç olur?", "s": [{"d": "yürü [[hız]]"}, {"c": "control", "t": "eğer <s:«sağ ok» tuşuna basıldı mı?> ise", "b": [["variables", "[x hızı] 'i [[hız]] kadar değiştir"], ["looks", "«sağ» kılığına geç"]]}, ["variables", "[x hızı] değişkenini {[x hızı] * (0.9)} yap"], ["motion", "x konumunu [x hızı] değiştir"]], "o": ["1", "0.9", "0.1", "1.9"], "k": "eyJjIjogMSwgImUiOiAiw5ZuY2UgaMSxemEgMSBla2xlbmlyLCBzb25yYSBoxLF6IDAuOSBpbGUgw6dhcnDEsWzEsXI6IDEgw5cgMC45ID0gMC45LiBLYXJha3RlciBidSBrYXJlZGUgMC45IHBpa3NlbCBpbGVybGVyLiJ9"}, {"t": "Sağ oku bıraktın. <code>x hızı</code> şu an 9. Karakter ne yapar?", "s": [["variables", "[x hızı] değişkenini {[x hızı] * (0.9)} yap"], ["motion", "x konumunu [x hızı] değiştir"]], "o": ["Hemen durur", "Aynı hızla gitmeye devam eder", "Kayarak yavaşlar ve durur", "Geri geri gitmeye başlar"], "k": "eyJjIjogMiwgImUiOiAiT2sgYmFzxLFsxLEgZGXEn2lsa2VuIGjEsXphIGJpciDFn2V5IGVrbGVubWV6IGFtYSBoZXIga2FyZWRlIDAuOSBpbGUgw6dhcnDEsWzEsXI6IDksIDguMSwgNy4zLCA2LjbigKYgSMSxeiBrw7zDp8O8bGUga8O8w6fDvGxlIHPEsWbEsXJhIHlha2xhxZ/EsXIuIEJ1emRhIGtheWFyIGdpYmkgaGlzc2V0dGlyZW4gZGUgYnUuIn0="}, {"t": "Karakter havada ve hiçbir şeye değmiyor. <code>y hızı</code> 0. <b>yerçekimi</b> bloğu 3 kez çalışınca <code>y hızı</code> kaç olur?", "s": [{"d": "yerçekimi"}, ["variables", "[y hızı] 'i (-1) kadar değiştir"], ["motion", "y konumunu [y hızı] değiştir"], {"c": "control", "t": "eğer <s:«Levels» 'a değiyor mu?> ise", "b": [["motion", "y konumunu {(0) - [y hızı]} değiştir"], ["variables", "[y hızı] değişkenini (0) yap"]]}], "o": ["-3", "-1", "3", "0"], "k": "eyJjIjogMCwgImUiOiAiSGVyIMOnYWzEscWfbWFkYSB5IGjEsXrEsSAxIGF6YWzEsXI6IC0xLCAtMiwgLTMuIEVrc2kgacWfYXJldGkgYcWfYcSfxLEgZG/En3J1IGdpdHRpxJ9pbmkgc8O2eWxlci4ifQ=="}, {"t": "Aynı 3 karede karakter toplam kaç piksel aşağı indi?", "s": null, "o": ["3", "9", "1", "6"], "k": "eyJjIjogMywgImUiOiAiSGVyIGthcmVkZSBiaXJheiBkYWhhIGjEsXpsxLEgZMO8xZ9lcjogw7ZuY2UgMSwgc29ucmEgMiwgc29ucmEgMyBwaWtzZWwuIFRvcGxhbSA2LiBHZXLDp2VrIGTDvG55YWRhIGRhIGTDvMWfZW4gxZ9leWxlciBiw7Z5bGUgaMSxemxhbsSxci4ifQ=="}, {"t": "<b>zıpla</b> bloğu neden önce 1 piksel aşağı inip <b>Levels'a değiyor mu?</b> diye soruyor?", "s": [{"d": "zıpla [[güç]]"}, {"c": "control", "t": "eğer <s:«yukarı ok» tuşuna basıldı mı?> ise", "b": [["motion", "y konumunu (-1) değiştir"], {"c": "control", "t": "eğer <s:«Levels» 'a değiyor mu?> ise", "b": [["variables", "[y hızı] değişkenini [[güç]] yap"]]}, ["motion", "y konumunu (1) değiştir"]]}], "o": ["Karakteri yere yapıştırmak için", "Ayağının altında zemin var mı diye bakmak için; havadayken bir daha zıplayamasın", "Zıplamayı yavaşlatmak için", "Kostümü değiştirmek için"], "k": "eyJjIjogMSwgImUiOiAiQmlyIHBpa3NlbCBhxZ9hxJ/EsSBpbmluY2UgemVtaW5lIGRlxJ9peW9yc2Ega2FyYWt0ZXIgeWVyZGUgZGVtZWt0aXIsIHrEsXBsYXlhYmlsaXIuIEhhdmFkYXlzYSBiaXIgxZ9leWUgZGXEn21leiB2ZSBoYXZhZGEgaWtpbmNpIGtleiB6xLFwbGF5YW1hei4gU29ucmEgMSBwaWtzZWwgZ2VyaSDDp8Sxa2FyLCBraW1zZSBmYXJrIGV0bWV6LiJ9"}, {"t": "Ana döngüde <b>zıpla (14)</b> yerine <b>zıpla (20)</b> yazarsan ne olur?", "s": [{"h": "events", "t": "⚑ tıklandığında"}, {"c": "control", "t": "sürekli tekrarla", "b": [["myblocks", "yürü (1)"], ["myblocks", "duvar ve yokuş"], ["myblocks", "yerçekimi"], ["myblocks", "zıpla (14)"], ["myblocks", "kontrol et"]]}], "o": ["Daha alçak zıplar", "Hiçbir şey değişmez", "Daha hızlı koşar", "Daha yükseğe zıplar"], "k": "eyJjIjogMywgImUiOiAiWWF6ZMSxxJ/EsW4gc2F5xLEgYmxvxJ91biA8Y29kZT5nw7zDpzwvY29kZT4gZ2lyZGlzaW5lIGdpZGVyIHZlIHkgaMSxesSxIG9sdXIuIEfDvMOnIGLDvHnDvHnDvG5jZSBrYXJha3RlciBkYWhhIHnDvGtzZcSfZSDDp8Sxa2FyLiBUZWsgYmlyIHNhecSxeWxhIG95dW51biBoaXNzaW5pIGF5YXJsYXlhYmlsaXlvcnN1bi4ifQ=="}, {"t": "Karakter koşarken önüne <b>16 piksel</b> yüksekliğinde bir blok çıktı. <b>duvar ve yokuş</b> ne yapar?", "s": [{"d": "duvar ve yokuş"}, {"c": "control", "t": "eğer <s:«Levels» 'a değiyor mu?> ise", "b": [{"c": "control", "t": "(6) defa tekrarla", "b": [{"c": "control", "t": "eğer <s:«Levels» 'a değiyor mu?> ise", "b": [["motion", "y konumunu (1) değiştir"]]}]}, {"c": "control", "t": "eğer <s:«Levels» 'a değiyor mu?> ise", "b": [["motion", "y konumunu (-6) değiştir"], ["motion", "x konumunu {(0) - [x hızı]} değiştir"], ["variables", "[x hızı] değişkenini (0) yap"]]}]}], "o": ["6 kez yukarı dener, hâlâ değdiği için geri itilir ve durur", "16 piksel tırmanır ve üstüne çıkar", "Bloğun içinden geçer", "Kendiliğinden zıplar"], "k": "eyJjIjogMCwgImUiOiAiS2FyYWt0ZXIgZW4gZmF6bGEgNiBwaWtzZWwgdMSxcm1hbmFiaWxpci4gMTYgcGlrc2VsbGlrIGJsb2sgacOnaW4gYnUgeWV0bWV6OyBow6Jsw6IgZGXEn2RpxJ9pIGnDp2luIDYgcGlrc2VsIGdlcmkgaW5lciwgaWxlcmkgZ2l0dGnEn2kga2FkYXIgZ2VyaSBnZWxpciB2ZSBoxLF6xLEgc8SxZsSxcmxhbsSxci4gWWFuaSBibG9rIGJpciBkdXZhci4gw5xzdMO8bmUgw6fEsWttYWsgacOnaW4gesSxcGxhbWFrIGdlcmVraXIuIn0="}, {"t": "<b>duvar ve yokuş</b> bloğunda <b>Ekranı yenilemeden çalışsın</b> kutusu işaretli. Neden?", "s": null, "o": ["Blok daha renkli görünsün diye", "Blok yalnızca bir kez çalışsın diye", "6 küçük deneme tek karede bitsin, karakter titremeden çıksın diye", "Ses çalabilsin diye"], "k": "eyJjIjogMiwgImUiOiAiS3V0dSBib8Wfa2VuIGhlciB0ZWtyYXIgYXlyxLEgYmlyIGthcmVkZSDDp2l6aWxpciB2ZSBrYXJha3RlciB5b2t1xZ90YSB0aXRyZXllcmVrIHnDvGtzZWxpci4gS3V0dSBpxZ9hcmV0bGl5a2VuIGLDvHTDvG4gZGVuZW1lbGVyIGF5bsSxIGthcmVkZSBiaXRlciwgZWtyYW5kYSBzYWRlY2Ugc29udcOnIGfDtnLDvG7DvHIuIn0="}, {"t": "Karakter sağ kenara ulaştı. <b>seviye değişti</b> haberini kimler duyar?", "s": [{"d": "kontrol et"}, {"c": "control", "t": "eğer <o:{m:x konumu} ＞ (225)> ise", "b": [["variables", "[seviye] 'i (1) kadar değiştir"], ["events", "«seviye değişti» haberini sal"], ["myblocks", "başlangıca git (-210) (-110)"]]}], "o": ["Sadece Player", "Sadece Levels", "Hiç kimse, haber sadece ses çalar", "Bu haberi dinleyenlerin hepsi: Levels, Dangers, Nota ve Sahne"], "k": "eyJjIjogMywgImUiOiAiSGFiZXIgYmlyIGR1eXVydSBnaWJpOiBcInNldml5ZSBkZcSfacWfdGkgaGFiZXJpbmkgYWxkxLHEn8SxbWRhXCIgYmxvxJ91IG9sYW4gaGVya2VzIGR1eWFyLiBUZWsgaGFiZXJsZSBkw7ZydCBrdWtsYSBheW7EsSBhbmRhIHllbmkgc2V2aXlleWUgZ2XDp2VyLiJ9"}, {"t": "<code>seviye</code> 3 iken bu blok çalışınca Levels hangi kostüme geçer?", "s": [{"h": "events", "t": "«seviye değişti» haberini aldığımda"}, ["looks", "[seviye] kılığına geç"]], "o": ["1. kostüm: çayır", "3. kostüm: gece", "Son kostüm: kazandın", "Kostüm değişmez"], "k": "eyJjIjogMSwgImUiOiAiS8SxbMSxayBibG/En3VuYSBiaXIgc2F5xLEgdmVyaW5jZSBTY3JhdGNoIG8gc8SxcmFkYWtpIGtvc3TDvG3DvCBzZcOnZXIuIEtvc3TDvG1sZXJpIHNldml5ZSBzxLFyYXPEsXlsYSBkaXpkacSfaW1peiBpw6dpbiB0ZWsgYmxvayBoZXIgc2V2aXllZGUgZG/En3J1IHplbWluaSBnZXRpcmlyLiJ9"}, {"t": "Karakter dikene değmedi ama çukura düştü. <code>y konumu</code> şimdi -175. Ne olur?", "s": [{"c": "control", "t": "eğer <o:<s:«Dangers» 'a değiyor mu?> veya <o:{m:y konumu} ＜ (-170)>> ise", "b": [["myblocks", "başlangıca git (-210) (-110)"]]}], "o": ["Seviyenin başına döner", "Hiçbir şey olmaz, dikene değmedi", "Oyun tamamen biter", "Sonraki seviyeye geçer"], "k": "eyJjIjogMCwgImUiOiAiXCJ2ZXlhXCIgYmxvxJ91bmRhIGlraSBrb8WfdWxkYW4gYmlyaW5pbiBkb8SfcnUgb2xtYXPEsSB5ZXRlci4gLTE3NSwgLTE3MCd0ZW4ga8O8w6fDvGsgb2xkdcSfdSBpw6dpbiBpa2luY2kga2/Fn3VsIGRvxJ9ydSB2ZSBrYXJha3RlciBiYcWfYSBkw7ZuZXIuIn0="}, {"t": "Nota toplandıktan sonra neden bir daha sayılmıyor?", "s": [{"h": "events", "t": "⚑ tıklandığında"}, {"c": "control", "t": "sürekli tekrarla", "b": [{"c": "control", "t": "eğer <s:«Player» 'a değiyor mu?> ise", "b": [["looks", "gizle"], ["variables", "[nota] 'i (1) kadar değiştir"], ["sound", "«nota» sesini başlat"]]}]}], "o": ["Nota silindiği için", "Döngü durduğu için", "Gizli bir kukla \"değiyor mu?\" sorusuna hayır der", "nota değişkeni en fazla 1 olabildiği için"], "k": "eyJjIjogMiwgImUiOiAiR2l6bGVuZW4ga3VrbGEgaGnDp2JpciDFn2V5ZSBkZcSfbWnFnyBzYXnEsWxtYXouIETDtm5nw7wgZMO2bm1leWUgZGV2YW0gZWRlciBhbWEga2/Fn3VsIGFydMSxayBkb8SfcnUgb2xtYXouIFllbmkgc2V2aXllZGUgXCJnw7ZzdGVyXCIgYmxvxJ91IG5vdGF5xLEgZ2VyaSBnZXRpcmlyLiJ9"}];
+const KEY = 'nurbeniz-gunes-platform-quiz-v1';
+const RKEY = KEY + '-resets';
+const N = Q.length;
+let S = {started:false, i:0, answers:[], points:0, streak:0, best:0, done:false, startedAt:null, finishedAt:null};
+const $ = id => document.getElementById(id);
+
+function decode(k){
+  const bin = atob(k); const bytes = new Uint8Array(bin.length);
+  for (let j = 0; j < bin.length; j++) bytes[j] = bin.charCodeAt(j);
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+function save(){
+  try{
+    localStorage.setItem(KEY, JSON.stringify(S));
+    const el = $('saved'); el.classList.add('on'); clearTimeout(save.t); save.t = setTimeout(() => el.classList.remove('on'), 1400);
+  }catch(e){}
+}
+function load(){ try{ const r = localStorage.getItem(KEY); if (r){ const o = JSON.parse(r); if (o && Array.isArray(o.answers)) S = Object.assign(S, o); } }catch(e){} }
+function resets(){ try{ return parseInt(localStorage.getItem(RKEY) || '0', 10) || 0; }catch(e){ return 0; } }
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+/* ---------- piksel çizimler ---------- */
+const NOTE = ["....##....","....###...","....####..","....##.##.","....##..#.","....##....","....##....","....##....","..####....",".#####....","######....","######....",".####....."];
+function noteSvg(fill, stroke){
+  let r = '';
+  NOTE.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === '#') r += `<rect x="${x}" y="${y}" width="1" height="1" fill="${fill}"/>`; }));
+  return r;
+}
+const HERO = ["....######......","...#########....","...##########...","..###########...","..####..##.#....","..###########...","...#########....","....#######.....","...#########....","..##.#####.##...","....#######.....","....##...##.....","...###...###...."];
+function heroSvg(){
+  let r = '';
+  HERO.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === '#') r += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="#8f9bb8"/>`; }));
+  return `<svg class="hero" viewBox="0 0 16 13" shape-rendering="crispEdges">${r}<rect x="6" y="4" width="2" height="1" fill="#fff"/><rect x="10" y="4" width="1" height="1" fill="#fff"/></svg>`;
+}
+document.getElementById('noteG').outerHTML = noteSvg('#ffd23f');
+
+function renderMap(){
+  const m = $('map'); let h = '';
+  for (let j = 0; j < N; j++){
+    const a = S.answers[j];
+    const cur = S.started && !S.done && j === S.i;
+    let n = '';
+    if (a) n = `<svg class="n" viewBox="0 0 10 13" shape-rendering="crispEdges">${noteSvg(a.ok ? '#ffd23f' : '#b7bfd3')}</svg>`;
+    h += `<div class="tile${cur ? ' cur' : ''}">${cur ? heroSvg() : n}</div>`;
+  }
+  m.innerHTML = h;
+}
+
+/* ---------- Scratch blokları ---------- */
+const REP_CAT = {m:'motion', o:'operators', s:'sensing', l:'looks', v:'variables'};
+function inline(src){
+  // (girdi) «açılır» [değişken] [[argüman]] {işlem} {m:hareket} <s:algılama> <o:işlem>
+  let out = '', i = 0;
+  const until = (open, close, from) => {           // eşleşen kapanışı bulur (iç içe)
+    let d = 0;
+    for (let j = from; j < src.length; j++){
+      if (src.startsWith(open, j)) d++;
+      else if (src.startsWith(close, j)){ d--; if (d === 0) return j; }
+    }
+    return src.length;
+  };
+  while (i < src.length){
+    const c = src[i];
+    if (src.startsWith('[[', i)){ const j = src.indexOf(']]', i); out += `<span class="rep" style="--rc:#ff6680">${esc(src.slice(i+2, j))}</span>`; i = j + 2; }
+    else if (c === '['){ const j = src.indexOf(']', i); out += `<span class="rep" style="--rc:#ff8c1a">${esc(src.slice(i+1, j))}</span>`; i = j + 1; }
+    else if (c === '('){ const j = src.indexOf(')', i); out += `<span class="in">${esc(src.slice(i+1, j))}</span>`; i = j + 1; }
+    else if (c === '«'){ const j = src.indexOf('»', i); out += `<span class="dd">${esc(src.slice(i+1, j))}</span>`; i = j + 1; }
+    else if (c === '{'){ const j = until('{', '}', i); let body = src.slice(i+1, j), cat = 'operators';
+      if (/^[a-z]:/.test(body)){ cat = REP_CAT[body[0]]; body = body.slice(2); }
+      out += `<span class="rep c-${cat}" style="--rc:var(--c)">${inline(body)}</span>`; i = j + 1; }
+    else if (c === '<' && /^<[a-z]:/.test(src.slice(i, i+3))){ const j = until('<', '>', i); const cat = REP_CAT[src[i+1]];
+      out += `<span class="bool c-${cat}" style="--rc:var(--c)">${inline(src.slice(i+3, j))}</span>`; i = j + 1; }
+    else { let j = i; while (j < src.length && !'[({«<'.includes(src[j])) j++; if (j === i) j++;
+      out += esc(src.slice(i, j)).replace(/＞/g, '&gt;').replace(/＜/g, '&lt;').replace('⚑', '<svg class="flag" viewBox="0 0 16 16"><path d="M3 1v14" stroke="#455a2c" stroke-width="2"/><path d="M4 2c3-2 5 2 9 0v7c-4 2-6-2-9 0z" fill="#4cbf56" stroke="#45993d"/></svg>'); i = j; }
+  }
+  return out;
+}
+function renderNode(n){
+  if (Array.isArray(n)) return `<div class="blk c-${n[0]}">${inline(n[1])}</div>`;
+  if (n.d !== undefined) return `<div class="blk def c-myblocks">tanımla <span class="proto">${inline(n.d)}</span></div>`;
+  if (n.h) return `<div class="blk hat c-${n.h}">${inline(n.t)}</div>`;
+  return `<div class="cblk c-${n.c}"><div class="blk c-${n.c}">${inline(n.t)}</div><div class="cmid"><div class="arm"></div><div class="cin">${n.b.map(renderNode).join('')}</div></div><div class="cbot"></div></div>`;
+}
+function renderScript(s){ return `<div class="script">${s.map(renderNode).join('')}</div>`; }
+
+/* ---------- akış ---------- */
+function hud(){
+  $('points').textContent = S.points; $('streak').textContent = S.streak; renderMap();
+}
+function show(id){ ['intro','quiz','result'].forEach(x => $(x).classList.toggle('hidden', x !== id)); }
+
+function renderQ(){
+  const q = Q[S.i];
+  $('qnum').textContent = 'SORU ' + (S.i + 1) + ' / ' + N;
+  $('qtext').innerHTML = q.t;
+  if (q.s){ $('qcode').innerHTML = renderScript(q.s); $('qcode').classList.remove('hidden'); } else $('qcode').classList.add('hidden');
+  const box = $('opts'); box.innerHTML = '';
+  q.o.forEach((txt, j) => {
+    const b = document.createElement('button'); b.className = 'opt';
+    b.innerHTML = '<span class="l">' + 'ABCD'[j] + '</span><span>' + esc(txt) + '</span>';
+    b.onclick = () => answer(j); box.appendChild(b);
+  });
+  $('fb').className = 'fb'; $('fb').innerHTML = ''; $('nextBtn').classList.add('hidden');
+  const a = S.answers[S.i];
+  if (a) paint(a.pick, decode(q.k), a.gained);
+  hud();
+}
+function paint(pick, k, gained){
+  [...$('opts').children].forEach((b, j) => {
+    b.disabled = true;
+    if (j === k.c) b.classList.add('right');
+    else if (j === pick) b.classList.add('wrong');
+    else b.classList.add('dim');
+  });
+  const ok = pick === k.c;
+  $('fb').className = 'fb show ' + (ok ? 'ok' : 'no');
+  $('fb').innerHTML = (ok ? '<span class="pts">+' + gained + '</span><b>Doğru!</b>' : '<b>Doğru cevap: ' + 'ABCD'[k.c] + '</b>') + k.e;
+  $('nextBtn').textContent = S.i === N - 1 ? 'Sonucu gör →' : 'Sonraki soru →';
+  $('nextBtn').classList.remove('hidden');
+  $('nextBtn').focus({preventScroll:true});
+}
+function answer(j){
+  if (S.answers[S.i]) return;
+  const k = decode(Q[S.i].k); const ok = j === k.c; let gained = 0;
+  if (ok){ S.streak++; gained = 100 + (S.streak > 1 ? 50 : 0); S.points += gained; S.best = Math.max(S.best, S.streak); }
+  else S.streak = 0;
+  S.answers[S.i] = {pick:j, ok, gained};
+  save(); hud(); paint(j, k, gained);
+}
+function next(){
+  if (S.i < N - 1){ S.i++; save(); renderQ(); window.scrollTo({top:0, behavior:'smooth'}); }
+  else { S.done = true; if (!S.finishedAt) S.finishedAt = new Date().toISOString(); save(); renderResult(); }
+}
+function renderResult(){
+  show('result'); hud();
+  const c = S.answers.filter(a => a && a.ok).length;
+  $('finalScore').textContent = c + ' / ' + N;
+  $('finalSub').textContent = S.points + ' puan · en uzun seri ' + S.best;
+  $('grid').innerHTML = S.answers.map((a, j) => '<div class="cell ' + (a && a.ok ? 'ok' : 'no') + '">' + (j + 1) + (a && a.ok ? ' ✓' : ' ✗') + '</div>').join('');
+  let m;
+  if (c === N) m = 'Kusursuz tur! Oyununun motorunu satır satır biliyorsun. Kendi bonus seviyeni tasarlamaya hazırsın.';
+  else if (c >= 9) m = 'Çok güçlü bir sonuç. Turuncu kutulardaki soruların bloklarını oyununda bul, içindeki sayıyı değiştir ve oynayarak ne olduğunu gör.';
+  else if (c >= 6) m = 'Sağlam bir temel. Turuncu kutulardaki bloklarda bir sayıyı değiştirip oyununu oyna; karakterin nasıl farklı hareket ettiğini gözünle gör.';
+  else m = 'Şimdi en eğlenceli adım geliyor: turuncu kutulardaki blokları oyununda bul, sayılarla oyna ve karaktere ne olduğunu izle. Derste birlikte üzerinden geçeceğiz.';
+  $('finalMsg').textContent = m;
+}
+function reportText(){
+  const c = S.answers.filter(a => a && a.ok).length;
+  const lines = ['PLATFORM QUIZ · Güneş', 'Skor: ' + c + '/' + N + ' · Puan: ' + S.points + ' · En uzun seri: ' + S.best, 'Sıfırlama sayısı: ' + resets(), ''];
+  S.answers.forEach((a, j) => {
+    const k = decode(Q[j].k);
+    lines.push((a.ok ? '✔ ' : '✗ ') + 'Soru ' + (j + 1) + ' · seçimi: ' + 'ABCD'[a.pick] + (a.ok ? '' : ' · doğru: ' + 'ABCD'[k.c]));
+  });
+  if (S.startedAt && S.finishedAt){ const d = Math.max(1, Math.round((new Date(S.finishedAt) - new Date(S.startedAt)) / 60000)); lines.push('', 'Süre: ' + d + ' dk'); }
+  lines.push('Tarih: ' + new Date().toLocaleString('tr-TR'));
+  return lines.join('\n');
+}
+function report(){
+  const txt = reportText();
+  const done = () => { $('toast').textContent = 'Rapor kopyalandı. WhatsApp\'tan öğretmenine gönder.'; $('toast').classList.add('on'); setTimeout(() => $('toast').classList.remove('on'), 2600); };
+  const fallback = () => {
+    const t = $('copybox'); t.value = txt; t.classList.remove('hidden'); t.select();
+    let ok = false; try{ ok = document.execCommand('copy'); }catch(e){}
+    if (ok) done(); else { $('toast').textContent = 'Raporu kutudan seçip kopyala.'; $('toast').classList.add('on'); setTimeout(() => $('toast').classList.remove('on'), 2600); }
+  };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(txt).then(done, fallback); else fallback();
+}
+$('startBtn').onclick = () => { S.started = true; if (!S.startedAt) S.startedAt = new Date().toISOString(); save(); show('quiz'); renderQ(); };
+$('nextBtn').onclick = next;
+$('reportBtn').onclick = report;
+$('resetBtn').onclick = () => {
+  if (!confirm('Tüm cevapların ve puanın silinecek. Baştan başlamak istiyor musun?')) return;
+  try{ localStorage.removeItem(KEY); localStorage.setItem(RKEY, String(resets() + 1)); }catch(e){}
+  location.reload();
+};
+load(); hud();
+if (S.done) renderResult(); else if (S.started){ show('quiz'); renderQ(); }
+</script>
+</body>
+</html>
